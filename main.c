@@ -5,11 +5,11 @@
 int main()
 {
     Figure chessboard[8][8] = {};
-    //Move Moves[1000];
+    // Move Moves[1000];
     char str[64];
     char* name;
     FILE* f;
-    //int i = 0;
+    // int i = 0;
     createChessboard(
             chessboard,
             "rnbqkbnr"
