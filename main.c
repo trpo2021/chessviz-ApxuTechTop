@@ -13,12 +13,12 @@ int main()
     createChessboard(
             chessboard,
             "rnbqkbnr"
-            "pkpppppp"
+            "pppppppp"
             "        "
             "        "
             "        "
             "        "
-            "PPPPPqPP"
+            "PPPPPPPP"
             "RNBQKBNR");
     fgets(str, 64, stdin);
     if (strncmp(str, "chessviz ", 9) == 0) {
