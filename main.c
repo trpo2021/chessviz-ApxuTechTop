@@ -5,7 +5,7 @@
 int main(int argc, char** argv)
 {
     Chessboard chessboard;
-    char string[CHESSBOARD_SIZE * CHESSBOARD_SIZE + 1];
+    char string[(CHESSBOARD_SIZE + 1) * (CHESSBOARD_SIZE + 1) * 2 + 1];
     createChessboard(
             &chessboard,
             "rnbqkbnr"
