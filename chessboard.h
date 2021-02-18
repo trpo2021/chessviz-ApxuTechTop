@@ -1,4 +1,6 @@
-enum FigureType {
+#pragma once
+
+typedef enum {
     FigureTypeKing,
     FigureTypeQueen,
     FigureTypeRook,
@@ -6,15 +8,15 @@ enum FigureType {
     FigureTypeBishop,
     FigureTypePawn,
     FigureTypeNone
-};
-enum FigureSide { FigureSideWhite, FigureSideBlack, FigureSideNone };
+} FigureType;
+typedef enum { FigureSideWhite, FigureSideBlack, FigureSideNone } FigureSide;
 
-typedef struct Field {
+typedef struct {
     char letter;
     char number;
 } Field;
 
-typedef struct Move {
+typedef struct {
     Field from;
     Field to;
     char who;
@@ -22,15 +24,15 @@ typedef struct Move {
     char extra;
 } Move;
 
-typedef struct Figure {
-    enum FigureType type;
-    enum FigureSide side;
+typedef struct {
+    FigureType type;
+    FigureSide side;
 } Figure;
 
-int createFigure(Figure* figure, char what);
+typedef struct {
+    Figure cells[8][8];
+} Chessboard;
 
-void printFigure(Figure figure);
+void createChessboard(Chessboard* chessboard, char* fromString);
 
-void createChessboard(Figure chessboard[8][8], char str[65]);
-
-void printChessboard(Figure chessboard[8][8]);
+void chessboardToString(Chessboard chessboard, char* string);

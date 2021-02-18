@@ -1,17 +1,15 @@
+#define CHESSBOARD_SIZE 8
+
 #include "chessboard.h"
 #include <stdio.h>
 #include <string.h>
 
-int main()
+int main(int argc, char** argv)
 {
-    Figure chessboard[8][8] = {};
-    // Move Moves[1000];
-    char str[64];
-    char* name;
-    FILE* f;
-    // int i = 0;
+    Chessboard chessboard;
+    char string[CHESSBOARD_SIZE * CHESSBOARD_SIZE + 1];
     createChessboard(
-            chessboard,
+            &chessboard,
             "rnbqkbnr"
             "pppppppp"
             "        "
@@ -20,18 +18,7 @@ int main()
             "        "
             "PPPPPPPP"
             "RNBQKBNR");
-    fgets(str, 64, stdin);
-    if (strncmp(str, "chessviz ", 9) == 0) {
-        name = str + 9;
-        printf("%s\n", name);
-        f = fopen(name, "r");
-        if (f == NULL) {
-            printf("Can't open file\n");
-            getchar();
-            return 1;
-        }
-        printChessboard(chessboard);
-    }
-    getchar();
+    chessboardToString(chessboard, string);
+    printf("%s", string);
     return 0;
 }

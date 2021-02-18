@@ -1,92 +1,96 @@
+#define CHESSBOARD_SIZE 8
+
 #include "chessboard.h"
 #include <ctype.h>
 #include <stdio.h>
 
-int createFigure(Figure* figure, char what)
+static int createFigure(Figure* figure, char fromChar)
 {
-    if (islower(what)) {
-        figure->side = FigureSideBlack;
-    } else {
-        figure->side = FigureSideWhite;
-    }
-    switch (tolower(what)) {
-    case 'r':
-        figure->type = FigureTypeRook;
-        break;
-    case 'n':
-        figure->type = FigureTypeKnight;
-        break;
-    case 'b':
-        figure->type = FigureTypeBishop;
-        break;
-    case 'q':
-        figure->type = FigureTypeQueen;
-        break;
-    case 'k':
-        figure->type = FigureTypeKing;
-        break;
-    case 'p':
-        figure->type = FigureTypePawn;
-        break;
-    case ' ':
+    if (fromChar == ' ') {
         figure->side = FigureSideNone;
         figure->type = FigureTypeNone;
-        break;
-    default:
-        printf("Cant transform [%c] to figure\n", what);
-        return 1;
+    } else {
+        figure->side = (islower(fromChar)) ? FigureSideBlack : FigureSideWhite;
+        switch (tolower(fromChar)) {
+        case 'r':
+            figure->type = FigureTypeRook;
+            break;
+        case 'n':
+            figure->type = FigureTypeKnight;
+            break;
+        case 'b':
+            figure->type = FigureTypeBishop;
+            break;
+        case 'q':
+            figure->type = FigureTypeQueen;
+            break;
+        case 'k':
+            figure->type = FigureTypeKing;
+            break;
+        case 'p':
+            figure->type = FigureTypePawn;
+            break;
+        default:
+            return 1;
+        }
     }
 
     return 0;
 }
 
-void printFigure(Figure figure)
+static char figureToChar(Figure figure)
 {
-    int color = figure.side == FigureSideBlack;
+    char figureChar = 'c';
     switch (figure.type) {
     case FigureTypeRook:
-        printf("%c", ('R' + color * 32));
+        figureChar = 'r';
         break;
     case FigureTypeKnight:
-        printf("%c", ('N' + color * 32));
+        figureChar = 'n';
         break;
     case FigureTypeBishop:
-        printf("%c", ('B' + color * 32));
+        figureChar = 'b';
         break;
     case FigureTypeQueen:
-        printf("%c", ('Q' + color * 32));
+        figureChar = 'q';
         break;
     case FigureTypeKing:
-        printf("%c", ('K' + color * 32));
+        figureChar = 'k';
         break;
     case FigureTypePawn:
-        printf("%c", ('P' + color * 32));
+        figureChar = 'p';
         break;
     case FigureTypeNone:
-        printf(" ");
+        figureChar = ' ';
         break;
     }
+    figureChar = (figure.side == FigureSideWhite) ? toupper(figureChar)
+                                                  : figureChar;
+
+    return figureChar;
 }
 
-void createChessboard(Figure chessboard[8][8], char str[65])
+void createChessboard(Chessboard* chessboard, char* fromString)
 {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            int index = (7 - i) * 8 + j;
-            createFigure(&chessboard[i][j], str[index]);
+    for (int i = 0; i < CHESSBOARD_SIZE; i++) {
+        for (int j = 0; j < CHESSBOARD_SIZE; j++) {
+            int index = (CHESSBOARD_SIZE - 1 - i) * CHESSBOARD_SIZE + j;
+            createFigure(&chessboard->cells[i][j], fromString[index]);
         }
     }
 }
 
-void printChessboard(Figure chessboard[8][8])
+void chessboardToString(Chessboard chessboard, char* string)
 {
-    for (int i = 7; i >= 0; i--) {
-        printf("%d", (i + 1));
-        for (int j = 0; j < 8; j++) {
-            printf(" ");
-            printFigure(chessboard[i][j]);
+    int n = 0;
+    for (int i = CHESSBOARD_SIZE - 1; i >= 0; i--) {
+        n += sprintf(string + n, "%d", (i + 1));
+        for (int j = 0; j < CHESSBOARD_SIZE; j++) {
+            n += sprintf(string + n, " ");
+            char c = figureToChar(chessboard.cells[i][j]);
+            n += sprintf(string + n, "%c", c);
         }
-        printf("\n");
+        n += sprintf(string + n, "\n");
     }
-    printf("  a b c d e f g h\n");
+    sprintf(string + n, "  a b c d e f g h\n");
 }
