@@ -16,7 +16,7 @@ int main(int argc, char** argv)
             "        "
             "PPPPPPPP"
             "RNBQKBNR");
-    chessboardToString(chessboard, string);
+    chessboardToString(&chessboard, string);
     printf("%s", string);
     return 0;
 }

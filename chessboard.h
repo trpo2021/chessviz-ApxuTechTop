@@ -35,6 +35,6 @@ typedef struct {
     Figure cells[CHESSBOARD_SIZE][CHESSBOARD_SIZE];
 } Chessboard;
 
-void createChessboard(Chessboard* chessboard, char* fromString);
+void createChessboard(Chessboard* chessboard, const char* fromString);
 
-void chessboardToString(Chessboard chessboard, char* string);
+void chessboardToString(const Chessboard* chessboard, char* string);

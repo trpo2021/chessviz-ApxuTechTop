@@ -70,7 +70,7 @@ static char figureToChar(Figure figure)
     return figureChar;
 }
 
-void createChessboard(Chessboard* chessboard, char* fromString)
+void createChessboard(Chessboard* chessboard, const char* fromString)
 {
     for (int i = 0; i < CHESSBOARD_SIZE; i++) {
         for (int j = 0; j < CHESSBOARD_SIZE; j++) {
@@ -80,14 +80,14 @@ void createChessboard(Chessboard* chessboard, char* fromString)
     }
 }
 
-void chessboardToString(Chessboard chessboard, char* string)
+void chessboardToString(const Chessboard* chessboard, char* string)
 {
     int n = 0;
     for (int i = CHESSBOARD_SIZE - 1; i >= 0; i--) {
         n += sprintf(string + n, "%d", (i + 1));
         for (int j = 0; j < CHESSBOARD_SIZE; j++) {
             n += sprintf(string + n, " ");
-            char c = figureToChar(chessboard.cells[i][j]);
+            char c = figureToChar(chessboard->cells[i][j]);
             n += sprintf(string + n, "%c", c);
         }
         n += sprintf(string + n, "\n");
