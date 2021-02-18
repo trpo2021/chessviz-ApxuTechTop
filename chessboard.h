@@ -1,5 +1,7 @@
 #pragma once
 
+#define CHESSBOARD_SIZE 8
+
 typedef enum {
     FigureTypeKing,
     FigureTypeQueen,
@@ -30,7 +32,7 @@ typedef struct {
 } Figure;
 
 typedef struct {
-    Figure cells[8][8];
+    Figure cells[CHESSBOARD_SIZE][CHESSBOARD_SIZE];
 } Chessboard;
 
 void createChessboard(Chessboard* chessboard, char* fromString);
