@@ -1,5 +1,3 @@
-#define CHESSBOARD_SIZE 8
-
 #include "chessboard.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -9,30 +7,30 @@ static int createFigure(Figure* figure, char fromChar)
     if (fromChar == ' ') {
         figure->side = FigureSideNone;
         figure->type = FigureTypeNone;
-    } else {
-        figure->side = (islower(fromChar)) ? FigureSideBlack : FigureSideWhite;
-        switch (tolower(fromChar)) {
-        case 'r':
-            figure->type = FigureTypeRook;
-            break;
-        case 'n':
-            figure->type = FigureTypeKnight;
-            break;
-        case 'b':
-            figure->type = FigureTypeBishop;
-            break;
-        case 'q':
-            figure->type = FigureTypeQueen;
-            break;
-        case 'k':
-            figure->type = FigureTypeKing;
-            break;
-        case 'p':
-            figure->type = FigureTypePawn;
-            break;
-        default:
-            return 1;
-        }
+        return 0;
+    }
+    figure->side = islower(fromChar) ? FigureSideBlack : FigureSideWhite;
+    switch (tolower(fromChar)) {
+    case 'r':
+        figure->type = FigureTypeRook;
+        break;
+    case 'n':
+        figure->type = FigureTypeKnight;
+        break;
+    case 'b':
+        figure->type = FigureTypeBishop;
+        break;
+    case 'q':
+        figure->type = FigureTypeQueen;
+        break;
+    case 'k':
+        figure->type = FigureTypeKing;
+        break;
+    case 'p':
+        figure->type = FigureTypePawn;
+        break;
+    default:
+        return 1;
     }
 
     return 0;
