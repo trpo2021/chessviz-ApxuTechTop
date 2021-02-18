@@ -1,5 +1,3 @@
-#define CHESSBOARD_SIZE 8
-
 #include "chessboard.h"
 #include <stdio.h>
 #include <string.h>
