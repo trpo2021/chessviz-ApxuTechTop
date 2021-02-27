@@ -2,5 +2,6 @@
 *.exe
 *.o
 chessviz
+!chessviz/
 *.run
 *.elf
