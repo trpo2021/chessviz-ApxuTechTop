@@ -62,4 +62,8 @@ typedef struct {
     Move array[100];
 } Moves;
 
-int doMove(const Move move, Chessboard* chessboard);
+int doMove(
+        const Moves moves,
+        const int index,
+        Chessboard* chessboard,
+        char* errstr);

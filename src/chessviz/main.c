@@ -44,9 +44,9 @@ int main(int argc, char** argv)
             "RNBQKBNR");
     int errnum = 0;
     for (int i = 0; i < moves.count; i++) {
-        errnum = doMove(moves.array[i], &chessboard);
+        errnum = doMove(moves, i, &chessboard, errstr);
         if (errnum) {
-            printf("%d", errnum);
+            printf("\n%s\n", errstr);
             return 1;
         }
     }
