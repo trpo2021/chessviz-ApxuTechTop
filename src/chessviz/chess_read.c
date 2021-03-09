@@ -2,6 +2,8 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#define ERRFRMT(x, y) "Error at column " x ": expected "y
+
 static int parseNumber(const char* string, const char** endptr)
 {
     int num = 0;
@@ -92,8 +94,8 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
     move->who = parseFigure(cptr, &endptr);
     if (move->who == FigureTypeNone) {
         sprintf(errstr,
-                "Error at column %d: expected <Figure char>, got %c",
-                (int)(endptr - sptr),
+                ERRFRMT("%td", "<Figure char>, got %c"),
+                endptr - sptr,
                 *endptr);
         return 1;
     }
@@ -101,9 +103,7 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 
     move->from = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr,
-                "Error at column %d: expected <Field>",
-                (int)(cptr - sptr));
+        sprintf(errstr, ERRFRMT("%td", "<Field>"), cptr - sptr);
         return 1;
     }
     cptr = endptr;
@@ -114,8 +114,8 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
         move->type = MoveTypeCapture;
     } else {
         sprintf(errstr,
-                "Error at column %d: expected '-' or 'x', got %c",
-                (int)(cptr - sptr),
+                ERRFRMT("%td", "'-' or 'x', got %c"),
+                cptr - sptr,
                 *cptr);
         return 1;
     }
@@ -123,9 +123,7 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 
     move->to = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr,
-                "Error at column %d: expected <Field>",
-                (int)(cptr - sptr));
+        sprintf(errstr, ERRFRMT("%td", "<Field>"), cptr - sptr);
         return 1;
     }
     cptr = endptr;
@@ -145,24 +143,20 @@ int parseStep(const char* string, Moves* moves, char* errstr)
 
     num = parseNumber(cptr, &endptr);
     if (num == 0) {
-        sprintf(errstr, "Error at column 0: expected number");
+        sprintf(errstr, ERRFRMT("0", "number"));
         return 1;
     }
     cptr = endptr;
     if (moves->count / 2 + 1 != num) {
-        sprintf(errstr, "Error at column 0: expected %d", moves->count / 2 + 1);
+        sprintf(errstr, ERRFRMT("0", "%d"), moves->count / 2 + 1);
         return 1;
     }
     if (*cptr++ != '.') {
-        sprintf(errstr,
-                "Error at column %d: expected '.'",
-                (int)(cptr - string));
+        sprintf(errstr, ERRFRMT("%td", "'.'"), cptr - string);
         return 1;
     }
     if (*cptr++ != ' ') {
-        sprintf(errstr,
-                "Error at column %d: expected ' '",
-                (int)(cptr - string));
+        sprintf(errstr, ERRFRMT("%td", "' '"), cptr - string);
         return 1;
     }
     endptr = string;
@@ -173,9 +167,7 @@ int parseStep(const char* string, Moves* moves, char* errstr)
     moves->count++;
     cptr = endptr;
     if (*cptr++ != ' ' && *cptr != '\0' && *cptr != '\n') {
-        sprintf(errstr,
-                "Error at column %d: expected ' '",
-                (int)(cptr - string));
+        sprintf(errstr, ERRFRMT("%td", "' '"), cptr - string);
         return 1;
     }
     if (*cptr != ' ' && *cptr != '\0') {
@@ -193,10 +185,7 @@ int parseStep(const char* string, Moves* moves, char* errstr)
             return 0;
         }
         if (!isspace(*cptr)) {
-            sprintf(errstr,
-                    "Error at column %d: not expected <%c>",
-                    (int)(cptr - string),
-                    *cptr);
+            sprintf(errstr, ERRFRMT("%td", "<%c>"), cptr - string, *cptr);
             return 1;
         }
         cptr = cptr + 1;
