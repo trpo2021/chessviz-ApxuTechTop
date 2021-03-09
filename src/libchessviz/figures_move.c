@@ -87,7 +87,7 @@ int doMove(
                 return 1;
             }
         } else {
-            if (fl == tl || abs(fl - tl) > 1) {
+            if (fl == tl || abs((int)fl - (int)tl) > 1) {
                 sprintf(errstr,
                         "Error at move %d: Pawn can capture only diagonally",
                         index + 1);
