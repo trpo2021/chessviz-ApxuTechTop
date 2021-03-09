@@ -4,7 +4,7 @@ LIB_NAME = libchessviz
 CC = gcc
 RM = rm -rf
 
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -std=c11
 CPPFLAGS = -I src -MP -MMD
 LDFLAGS =
 LDLIBS =
