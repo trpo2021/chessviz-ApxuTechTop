@@ -1,6 +1,9 @@
 APP_NAME = chessviz
 LIB_NAME = libchessviz
 
+CC = gcc
+RM = rm -rf
+
 CFLAGS = -Wall -Wextra -Werror
 CPPFLAGS = -I src -MP -MMD
 LDFLAGS =
