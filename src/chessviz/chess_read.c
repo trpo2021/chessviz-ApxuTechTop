@@ -11,7 +11,11 @@ static int parseNumber(const char* string, const char** endptr)
             *endptr = cptr;
             return num;
         }
-        num = num * 10 + *cptr - '0');
+        if (num == 0 && *cptr == '0') {
+            *endptr = cptr;
+            return 0;
+        }
+        num = num * 10 + *cptr - '0';
         cptr++;
     }
 }
@@ -22,7 +26,7 @@ static FigureType parseFigure(const char* string, const char** endptr)
     if (islower(*string)) {
         return FigureTypePawn;
     }
-    switch (*(*endptr++)) {
+    switch (*(*endptr)++) {
     case 'R':
         return FigureTypeRook;
     case 'N':
@@ -35,28 +39,28 @@ static FigureType parseFigure(const char* string, const char** endptr)
         return FigureTypeKing;
     }
 
-    *endptr--;
+    *endptr = string;
     return FigureTypeNone;
 }
 
-static Field parseField(const char* string, const char** endptr)
+static Field parseField(const char* cptr, const char** endptr)
 {
     Field field;
-    *endptr = string;
-    if (*string < 'a' || *string > 'h') {
+    *endptr = cptr;
+    if (*cptr < 'a' || *cptr > 'h') {
         return field;
     }
-    field.letter = *string - 'a';
-    string++;
-    if (*string < '1' || *string > '8') {
+    field.letter = *cptr - 'a';
+    cptr++;
+    if (*cptr < '1' || *cptr > '8') {
         return field;
     }
-    field.number = *string - '0';
-    *endptr = string + 2;
+    field.number = *cptr - '1';
+    *endptr = *endptr + 2;
     return field;
 }
 
-static MoveExtra parseExtra(const char* string, const char** endstr)
+static MoveExtra parseExtra(const char* string, const char** endptr)
 {
     const char* cptr = string;
     switch (*cptr) {
@@ -69,15 +73,18 @@ static MoveExtra parseExtra(const char* string, const char** endstr)
     case 'Q':
         return MoveExtraQueen;
     }
+    *endptr = cptr;
     // e.p.
 
     //+
 
     //#
+    return MoveExtraNone;
 }
 
 int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 {
+    const char* sptr = *endstr;
     const char* cptr = string;
     const char* endptr;
     // 0-0-0
@@ -85,15 +92,16 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
     move->who = parseFigure(cptr, &endptr);
     if (move->who == FigureTypeNone) {
         sprintf(errstr,
-                "Error at column %d: expected <Figure char>",
-                endptr - string);
+                "Error at column %d: expected <Figure char>, got %c",
+                endptr - sptr,
+                *endptr);
         return 1;
     }
     cptr = endptr;
 
     move->from = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr, "Error at column %d: expected <Field>", cptr - string);
+        sprintf(errstr, "Error at column %d: expected <Field>", cptr - sptr);
         return 1;
     }
     cptr = endptr;
@@ -104,20 +112,24 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
         move->type = MoveTypeCapture;
     } else {
         sprintf(errstr,
-                "Error at column %d: expected '-' or 'x'",
-                cptr - string);
+                "Error at column %d: expected '-' or 'x', got %c",
+                cptr - sptr,
+                *cptr);
         return 1;
     }
     cptr++;
 
     move->to = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr, "Error at column %d: expected <Field>", cptr - string);
+        sprintf(errstr, "Error at column %d: expected <Field>", cptr - sptr);
         return 1;
     }
     cptr = endptr;
 
     move->extra = parseExtra(cptr, &endptr);
+    *endstr = cptr;
+
+    return 0;
 }
 
 int parseStep(const char* string, Moves* moves, char* errstr)
@@ -145,19 +157,26 @@ int parseStep(const char* string, Moves* moves, char* errstr)
         sprintf(errstr, "Error at column %d: expected ' '", cptr - string);
         return 1;
     }
-
+    endptr = string;
     errnum = parseMove(cptr, &endptr, &moves->array[moves->count], errstr);
     if (errnum) {
         return errnum;
     }
     moves->count++;
     cptr = endptr;
-    errnum = parseMove(cptr, &endptr, &moves->array[moves->count], errstr);
-    if (errnum) {
-        return errnum;
+    if (*cptr++ != ' ' && *cptr != '\0' && *cptr != '\n') {
+        sprintf(errstr, "Error at column %d: expected ' '", cptr - string);
+        return 1;
     }
-    moves->count++;
-    cptr = endptr;
+    if (*cptr != ' ' && *cptr != '\0') {
+        endptr = string;
+        errnum = parseMove(cptr, &endptr, &moves->array[moves->count], errstr);
+        if (errnum) {
+            return errnum;
+        }
+        moves->count++;
+        cptr = endptr;
+    }
 
     while (1) {
         if (*cptr == '\0') {
@@ -168,7 +187,8 @@ int parseStep(const char* string, Moves* moves, char* errstr)
                     "Error at column %d: not expected <%c>",
                     cptr - string,
                     *cptr);
+            return 1;
         }
-        *cptr++;
+        cptr = cptr + 1;
     }
 }
