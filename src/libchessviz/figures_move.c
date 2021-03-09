@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const char const* fttostr(FigureType ft)
+static const char* fttostr(FigureType ft)
 {
     switch (ft) {
     case FigureTypeKing:
