@@ -64,6 +64,12 @@ int doMove(
                     index + 1);
             return 1;
         }
+        if (toType == FigureTypeNone) {
+            sprintf(errstr,
+                    "Error at move %d: No figure for capture",
+                    index + 1);
+            return 1;
+        }
     } else {
         if (toType != FigureTypeNone) {
             sprintf(errstr,
@@ -73,11 +79,20 @@ int doMove(
         }
     }
     if (fromType == FigureTypePawn) {
-        if (move.type == MoveTypeQuiet && fl != tl) {
-            sprintf(errstr,
-                    "Error at move %d: Pawn can move only forward",
-                    index + 1);
-            return 1;
+        if (move.type == MoveTypeQuiet) {
+            if (fl != tl) {
+                sprintf(errstr,
+                        "Error at move %d: Pawn can move only forward",
+                        index + 1);
+                return 1;
+            }
+        } else {
+            if (fl == tl || abs(fl - tl) > 1) {
+                sprintf(errstr,
+                        "Error at move %d: Pawn can capture only diagonally",
+                        index + 1);
+                return 1;
+            }
         }
         switch ((tn - fn) * (fromSide == FigureSideWhite ? 1 : -1)) {
         case 1:
