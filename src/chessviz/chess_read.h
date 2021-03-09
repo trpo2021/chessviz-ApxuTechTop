@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../src/libchessviz/figures_move.h>
+#include <libchessviz/figures_move.h>
 
 int parseMove(
         const char* string, const char** endstr, Move* move, char* errstr);

@@ -1,7 +1,7 @@
 #include "chess_read.h"
-#include <../src/libchessviz/chess.h>
-#include <../src/libchessviz/chessboard_create.h>
-#include <../src/libchessviz/chessboard_print_plain.h>
+#include <libchessviz/chess.h>
+#include <libchessviz/chessboard_create.h>
+#include <libchessviz/chessboard_print_plain.h>
 #include <stdio.h>
 #include <string.h>
 
