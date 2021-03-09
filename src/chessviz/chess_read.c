@@ -45,7 +45,7 @@ static FigureType parseFigure(const char* string, const char** endptr)
 
 static Field parseField(const char* cptr, const char** endptr)
 {
-    Field field;
+    Field field = {FieldLetterA, FieldNumber1};
     *endptr = cptr;
     if (*cptr < 'a' || *cptr > 'h') {
         return field;
