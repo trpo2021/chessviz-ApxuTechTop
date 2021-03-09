@@ -59,7 +59,9 @@ int doMove(
     }
     if (move.type == MoveTypeCapture) {
         if (fromSide == toSide) {
-            sprintf(errstr, "Error at move %d: Cant capture yourself", index + 1);
+            sprintf(errstr,
+                    "Error at move %d: Cant capture yourself",
+                    index + 1);
             return 1;
         }
     } else {

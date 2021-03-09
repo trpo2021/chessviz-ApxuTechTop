@@ -1,6 +1,6 @@
 #include "chessboard_print_plain.h"
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
 
 static char figureToChar(Figure figure)
 {
