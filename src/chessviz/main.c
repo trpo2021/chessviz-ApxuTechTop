@@ -1,12 +1,15 @@
 #include "chess_read.h"
-#include <chess.h>
-#include <chessboard_create.h>
-#include <chessboard_print_plain.h>
+#include <../src/libchessviz/chess.h>
+#include <../src/libchessviz/chessboard_create.h>
+#include <../src/libchessviz/chessboard_print_plain.h>
 #include <stdio.h>
 #include <string.h>
 
 int main(int argc, char** argv)
 {
+    FILE* f;
+    char* filename;
+
     Moves moves;
     moves.count = 0;
     Chessboard chessboard;
@@ -15,9 +18,17 @@ int main(int argc, char** argv)
     char errstr[64];
 
     if (argc == 1) {
-        fgets(inputString, 64, stdin);
+        printf("Usage: chessviz <filename>");
+        return 0;
+    }
+
+    filename = argv[1];
+    f = fopen(filename, "r");
+
+    while (fgets(inputString, 64, f) != NULL) {
+        printf("%s", inputString);
         if (parseStep(inputString, &moves, errstr)) {
-            printf("%s", errstr);
+            printf("\n%s", errstr);
             return 0;
         }
     }
@@ -31,10 +42,18 @@ int main(int argc, char** argv)
             "        "
             "PPPPPPPP"
             "RNBQKBNR");
+    int errnum = 0;
     for (int i = 0; i < moves.count; i++) {
-        doMove(moves.array[i], &chessboard);
+        errnum = doMove(moves.array[i], &chessboard);
+        if (errnum) {
+            printf("%d", errnum);
+            return 1;
+        }
     }
+
     chessboardToString(&chessboard, string);
-    printf("%s", string);
+
+    printf("\n%s", string);
+
     return 0;
 }
