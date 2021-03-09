@@ -101,7 +101,9 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 
     move->from = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr, "Error at column %d: expected <Field>", (int)(cptr - sptr));
+        sprintf(errstr,
+                "Error at column %d: expected <Field>",
+                (int)(cptr - sptr));
         return 1;
     }
     cptr = endptr;
@@ -152,11 +154,15 @@ int parseStep(const char* string, Moves* moves, char* errstr)
         return 1;
     }
     if (*cptr++ != '.') {
-        sprintf(errstr, "Error at column %d: expected '.'", (int)(cptr - string));
+        sprintf(errstr,
+                "Error at column %d: expected '.'",
+                (int)(cptr - string));
         return 1;
     }
     if (*cptr++ != ' ') {
-        sprintf(errstr, "Error at column %d: expected ' '", (int)(cptr - string));
+        sprintf(errstr,
+                "Error at column %d: expected ' '",
+                (int)(cptr - string));
         return 1;
     }
     endptr = string;
@@ -167,7 +173,9 @@ int parseStep(const char* string, Moves* moves, char* errstr)
     moves->count++;
     cptr = endptr;
     if (*cptr++ != ' ' && *cptr != '\0' && *cptr != '\n') {
-        sprintf(errstr, "Error at column %d: expected ' '", (int)(cptr - string));
+        sprintf(errstr,
+                "Error at column %d: expected ' '",
+                (int)(cptr - string));
         return 1;
     }
     if (*cptr != ' ' && *cptr != '\0') {
