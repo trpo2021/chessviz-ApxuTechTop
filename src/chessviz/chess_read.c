@@ -84,7 +84,11 @@ static MoveExtra parseExtra(const char* string, const char** endptr)
     return MoveExtraNone;
 }
 
-int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
+int parseMove(
+        const char* string,
+        const char** endstr,
+        Move* move,
+        ParseError* parseError)
 {
     const char* sptr = *endstr;
     const char* cptr = string;
@@ -93,7 +97,9 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 
     move->who = parseFigure(cptr, &endptr);
     if (move->who == FigureTypeNone) {
-        sprintf(errstr,
+        parseError->errtype = ParseErrorTypeFigure;
+        parseError->column = endptr - sptr;
+        sprintf(parseError->errstr,
                 ERRFRMT("%td", "<Figure char>, got %c"),
                 endptr - sptr,
                 *endptr);
@@ -103,7 +109,9 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 
     move->from = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr, ERRFRMT("%td", "<Field>"), cptr - sptr);
+        parseError->errtype = ParseErrorTypeField;
+        parseError->column = cptr - sptr;
+        sprintf(parseError->errstr, ERRFRMT("%td", "<Field>"), cptr - sptr);
         return 1;
     }
     cptr = endptr;
@@ -113,7 +121,9 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
     } else if (*cptr == 'x') {
         move->type = MoveTypeCapture;
     } else {
-        sprintf(errstr,
+        parseError->errtype = ParseErrorTypeMove;
+        parseError->column = cptr - sptr;
+        sprintf(parseError->errstr,
                 ERRFRMT("%td", "'-' or 'x', got %c"),
                 cptr - sptr,
                 *cptr);
@@ -123,7 +133,9 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
 
     move->to = parseField(cptr, &endptr);
     if (cptr == endptr) {
-        sprintf(errstr, ERRFRMT("%td", "<Field>"), cptr - sptr);
+        parseError->errtype = ParseErrorTypeField;
+        parseError->column = cptr - sptr;
+        sprintf(parseError->errstr, ERRFRMT("%td", "<Field>"), cptr - sptr);
         return 1;
     }
     cptr = endptr;
@@ -134,7 +146,7 @@ int parseMove(const char* string, const char** endstr, Move* move, char* errstr)
     return 0;
 }
 
-int parseStep(const char* string, Moves* moves, char* errstr)
+int parseStep(const char* string, Moves* moves, ParseError* parseError)
 {
     int errnum = 0;
     int num = 0;
@@ -143,36 +155,47 @@ int parseStep(const char* string, Moves* moves, char* errstr)
 
     num = parseNumber(cptr, &endptr);
     if (num == 0) {
-        sprintf(errstr, ERRFRMT("0", "number"));
+        parseError->errtype = ParseErrorTypeNumber;
+        parseError->column = cptr - string;
+        sprintf(parseError->errstr, ERRFRMT("0", "number"));
         return 1;
     }
     cptr = endptr;
     if (moves->count / 2 + 1 != num) {
-        sprintf(errstr, ERRFRMT("0", "%d"), moves->count / 2 + 1);
+        parseError->errtype = ParseErrorTypeNumber;
+        parseError->column = cptr - string;
+        sprintf(parseError->errstr, ERRFRMT("0", "%d"), moves->count / 2 + 1);
         return 1;
     }
     if (*cptr++ != '.') {
-        sprintf(errstr, ERRFRMT("%td", "'.'"), cptr - string);
+        parseError->errtype = ParseErrorTypeSyntax;
+        parseError->column = cptr - string;
+        sprintf(parseError->errstr, ERRFRMT("%td", "'.'"), cptr - string);
         return 1;
     }
     if (*cptr++ != ' ') {
-        sprintf(errstr, ERRFRMT("%td", "' '"), cptr - string);
+        parseError->errtype = ParseErrorTypeSyntax;
+        parseError->column = cptr - string;
+        sprintf(parseError->errstr, ERRFRMT("%td", "' '"), cptr - string);
         return 1;
     }
     endptr = string;
-    errnum = parseMove(cptr, &endptr, &moves->array[moves->count], errstr);
+    errnum = parseMove(cptr, &endptr, &moves->array[moves->count], parseError);
     if (errnum) {
         return errnum;
     }
     moves->count++;
     cptr = endptr;
     if (*cptr++ != ' ' && *cptr != '\0' && *cptr != '\n') {
-        sprintf(errstr, ERRFRMT("%td", "' '"), cptr - string);
+        parseError->errtype = ParseErrorTypeSyntax;
+        parseError->column = cptr - string;
+        sprintf(parseError->errstr, ERRFRMT("%td", "' '"), cptr - string);
         return 1;
     }
     if (*cptr != ' ' && *cptr != '\0') {
         endptr = string;
-        errnum = parseMove(cptr, &endptr, &moves->array[moves->count], errstr);
+        errnum = parseMove(
+                cptr, &endptr, &moves->array[moves->count], parseError);
         if (errnum) {
             return errnum;
         }
@@ -185,7 +208,12 @@ int parseStep(const char* string, Moves* moves, char* errstr)
             return 0;
         }
         if (!isspace(*cptr)) {
-            sprintf(errstr, ERRFRMT("%td", "<%c>"), cptr - string, *cptr);
+            parseError->errtype = ParseErrorTypeSyntax;
+            parseError->column = cptr - string;
+            sprintf(parseError->errstr,
+                    ERRFRMT("%td", "<%c>"),
+                    cptr - string,
+                    *cptr);
             return 1;
         }
         cptr = cptr + 1;

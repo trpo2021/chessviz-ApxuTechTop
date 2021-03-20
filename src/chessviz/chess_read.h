@@ -2,7 +2,27 @@
 
 #include <libchessviz/figures_move.h>
 
-int parseMove(
-        const char* string, const char** endstr, Move* move, char* errstr);
+#define ERROR_STR_LEN 128
 
-int parseStep(const char* string, Moves* moves, char* errstr);
+typedef enum {
+    ParseErrorTypeNone,
+    ParseErrorTypeFigure,
+    ParseErrorTypeField,
+    ParseErrorTypeMove,
+    ParseErrorTypeNumber,
+    ParseErrorTypeSyntax,
+} ParseErrorType;
+
+typedef struct {
+    ParseErrorType errtype;
+    int column;
+    char errstr[ERROR_STR_LEN];
+} ParseError;
+
+int parseMove(
+        const char* string,
+        const char** endstr,
+        Move* move,
+        ParseError* parseError);
+
+int parseStep(const char* string, Moves* moves, ParseError* parseError);

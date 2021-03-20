@@ -15,6 +15,9 @@ int main(int argc, char** argv)
     Chessboard chessboard;
     char string[(CHESSBOARD_SIZE + 1) * (CHESSBOARD_SIZE + 1) * 2 + 1];
     char inputString[64];
+
+    ParseError parseError = {.errtype = ParseErrorTypeNone};
+
     char errstr[64];
 
     if (argc == 1) {
@@ -27,8 +30,8 @@ int main(int argc, char** argv)
 
     while (fgets(inputString, 64, f) != NULL) {
         printf("%s", inputString);
-        if (parseStep(inputString, &moves, errstr)) {
-            printf("\n%s", errstr);
+        if (parseStep(inputString, &moves, &parseError)) {
+            printf("\n%s", parseError.errstr);
             return 0;
         }
     }
@@ -49,6 +52,9 @@ int main(int argc, char** argv)
             printf("\n%s\n", errstr);
             return 1;
         }
+        chessboardToString(&chessboard, string);
+
+        printf("\n%s", string);
     }
 
     chessboardToString(&chessboard, string);
