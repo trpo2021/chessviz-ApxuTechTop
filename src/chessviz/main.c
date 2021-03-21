@@ -17,8 +17,7 @@ int main(int argc, char** argv)
     char inputString[64];
 
     ParseError parseError = {.errtype = ParseErrorTypeNone};
-
-    char errstr[64];
+    MoveError moveError = {.errtype = MoveErrorTypeNone};
 
     if (argc == 1) {
         printf("Usage: chessviz <filename>");
@@ -47,9 +46,9 @@ int main(int argc, char** argv)
             "RNBQKBNR");
     int errnum = 0;
     for (int i = 0; i < moves.count; i++) {
-        errnum = doMove(moves, i, &chessboard, errstr);
+        errnum = doMove(moves, i, &chessboard, &moveError);
         if (errnum) {
-            printf("\n%s\n", errstr);
+            printf("\n%s\n", moveError.errstr);
             return 1;
         }
         chessboardToString(&chessboard, string);

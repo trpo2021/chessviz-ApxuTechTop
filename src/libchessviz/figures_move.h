@@ -2,6 +2,24 @@
 
 #include "chess.h"
 
+#define ERROR_STR_LEN 128
+
+typedef enum {
+    MoveErrorTypeNone,
+    MoveErrorTypeAnotherSide,
+    MoveErrorTypeAnotherFigure,
+    MoveErrorTypeSelfAttack,
+    MoveErrorTypeMoveType,
+    MoveErrorTypeMove,
+    MoveErrorTypeAttack
+} MoveErrorType;
+
+typedef struct {
+    MoveErrorType errtype;
+    int move;
+    char errstr[ERROR_STR_LEN];
+} MoveError;
+
 typedef enum {
     FieldLetterA,
     FieldLetterB,
@@ -66,4 +84,4 @@ int doMove(
         const Moves moves,
         const int index,
         Chessboard* chessboard,
-        char* errstr);
+        MoveError* moveError);

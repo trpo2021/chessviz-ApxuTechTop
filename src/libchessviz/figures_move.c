@@ -28,7 +28,7 @@ int doMove(
         const Moves moves,
         const int index,
         Chessboard* chessboard,
-        char* errstr)
+        MoveError* moveError)
 {
     Move move = moves.array[index];
     FieldNumber fn = move.from.number;
@@ -39,58 +39,58 @@ int doMove(
     FigureType fromType = chessboard->cells[fn][fl].type;
     FigureSide toSide = chessboard->cells[tn][tl].side;
     FigureType toType = chessboard->cells[tn][tl].type;
+
+    moveError->move = index + 1;
+    char* errptr = moveError->errstr;
+    errptr += sprintf(errptr, "Error at move %d: ", moveError->move);
+
     if (fromSide != (unsigned int)index % 2) {
-        sprintf(errstr,
-                "Error at move %d: Cant move other side figures",
-                index + 1);
+        moveError->errtype = MoveErrorTypeAnotherSide;
+        sprintf(errptr, "Cant move other side figures");
         return 1;
     }
     if (fromType == FigureTypeNone) {
-        sprintf(errstr, "Error at move %d: No figure to move", index + 1);
+        moveError->errtype = MoveErrorTypeAnotherFigure;
+        sprintf(errptr, "No figure to move");
         return 1;
     }
     if (fromType != move.who) {
-        sprintf(errstr,
-                "Error at move %d: expected %s, got %s",
-                index + 1,
-                fttostr(fromType),
-                fttostr(move.who));
+        moveError->errtype = MoveErrorTypeAnotherFigure;
+        sprintf(errptr,
+                "expected %s, got %s",
+                fttostr(move.who),
+                fttostr(fromType));
         return 1;
     }
     if (move.type == MoveTypeCapture) {
         if (fromSide == toSide) {
-            sprintf(errstr,
-                    "Error at move %d: Cant capture yourself",
-                    index + 1);
+            moveError->errtype = MoveErrorTypeSelfAttack;
+            sprintf(errptr, "Cant capture yourself");
             return 1;
         }
         if (toType == FigureTypeNone) {
-            sprintf(errstr,
-                    "Error at move %d: No figure for capture",
-                    index + 1);
+            moveError->errtype = MoveErrorTypeMoveType;
+            sprintf(errptr, "No figure for capture");
             return 1;
         }
     } else {
         if (toType != FigureTypeNone) {
-            sprintf(errstr,
-                    "Error at move %d: Didnt expect figure for quiet move",
-                    index + 1);
+            moveError->errtype = MoveErrorTypeMoveType;
+            sprintf(errptr, "Didnt expect figure for quiet move");
             return 1;
         }
     }
     if (fromType == FigureTypePawn) {
         if (move.type == MoveTypeQuiet) {
             if (fl != tl) {
-                sprintf(errstr,
-                        "Error at move %d: Pawn can move only forward",
-                        index + 1);
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr, "Pawn can move only forward");
                 return 1;
             }
         } else {
             if (fl == tl || abs((int)fl - (int)tl) > 1) {
-                sprintf(errstr,
-                        "Error at move %d: Pawn can capture only diagonally",
-                        index + 1);
+                moveError->errtype = MoveErrorTypeAttack;
+                sprintf(errptr, "Pawn can capture only diagonally");
                 return 1;
             }
         }
@@ -99,23 +99,19 @@ int doMove(
             break;
         case 2:
             if (fn != FieldNumber2 && fn != FieldNumber7) {
-                sprintf(errstr,
-                        "Error at move %d: Pawn can double move forward only "
-                        "at first step",
-                        index + 1);
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr,
+                        "Pawn can double move forward only at first step");
                 return 1;
             }
             break;
         default:
             if (((int)(tn - fn) * (fromSide == FigureSideWhite ? 1 : -1)) < 0) {
-                sprintf(errstr,
-                        "Error at move %d: Pawn cant move backward",
-                        index + 1);
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr, "Pawn cant move backward");
             } else {
-                sprintf(errstr,
-                        "Error at move %d: Pawn can move forward a maximum of "
-                        "two cells",
-                        index + 1);
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr, "Pawn can move forward a maximum of two cells");
             }
             return 1;
         }
