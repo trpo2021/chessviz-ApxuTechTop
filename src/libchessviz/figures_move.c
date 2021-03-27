@@ -40,13 +40,16 @@ isAttacked(Field field, const Chessboard* chessboard, FigureSide side)
                 continue;
             }
             d = 1;
-            Figure f = chessboard->cells[n + i][l + j];
-            if (f.side != side && f.type == FigureTypeKing) {
-                return 1;
-            }
+
             while ((int)n + i * d >= 0 && (int)l + j * d >= 0
                    && (int)n + i * d < CHESSBOARD_SIZE
                    && (int)l + j * d < CHESSBOARD_SIZE) {
+                if (d == 1) {
+                    Figure f = chessboard->cells[n + i][l + j];
+                    if (f.side != side && f.type == FigureTypeKing) {
+                        return 1;
+                    }
+                }
                 Figure f = chessboard->cells[n + i * d][l + j * d];
                 if (f.side == side) {
                     break;
@@ -69,18 +72,30 @@ isAttacked(Field field, const Chessboard* chessboard, FigureSide side)
     for (int k = 0; k <= 1; k++) {
         for (int i = -1; i <= 1; i += 2) {
             for (int j = -1; j <= 1; j += 2) {
-                Figure f = chessboard->cells[n + i * (1 + k)][l + j * (2 - k)];
-                if (f.side != side && f.type == FigureTypeKnight) {
-                    return 1;
+                int kn, kl;
+                kn = (int)n + i * (1 + k);
+                kl = (int)l + j * (2 - k);
+                if (kn >= 0 && kl >= 0 && kn < CHESSBOARD_SIZE
+                    && kl < CHESSBOARD_SIZE) {
+                    Figure f = chessboard->cells[kn][kl];
+                    if (f.side != side && f.type == FigureTypeKnight) {
+                        return 1;
+                    }
                 }
             }
         }
     }
     int i = side == FigureSideWhite ? 1 : -1;
     for (int j = -1; j <= 1; j += 2) {
-        Figure f = chessboard->cells[n + i][l + j];
-        if (f.side != side && f.type == FigureTypePawn) {
-            return 1;
+        int kn, kl;
+        kn = (int)n + i;
+        kl = (int)l + j;
+        if (kn >= 0 && kl >= 0 && kn < CHESSBOARD_SIZE
+            && kl < CHESSBOARD_SIZE) {
+            Figure f = chessboard->cells[kn][kl];
+            if (f.side != side && f.type == FigureTypePawn) {
+                return 1;
+            }
         }
     }
 
@@ -102,11 +117,14 @@ int doMove(
     FigureType fromType = chessboard->cells[fn][fl].type;
     FigureSide toSide = chessboard->cells[tn][tl].side;
     FigureType toType = chessboard->cells[tn][tl].type;
-
     moveError->move = index + 1;
     char* errptr = moveError->errstr;
     errptr += sprintf(errptr, "Error at move %d: ", moveError->move);
-
+    if (fromType == FigureTypeNone) {
+        moveError->errtype = MoveErrorTypeAnotherFigure;
+        sprintf(errptr, "No figure to move");
+        return 1;
+    }
     if (fromSide != (unsigned int)index % 2) {
         moveError->errtype = MoveErrorTypeAnotherSide;
         sprintf(errptr, "Cant move other side figures");
@@ -138,23 +156,71 @@ int doMove(
             return 1;
         }
     }
+    if (move.extra == MoveExtraEnPassant || move.extra == MoveExtraBishop
+        || move.extra == MoveExtraKnight || move.extra == MoveExtraRook
+        || move.extra == MoveExtraQueen) {
+        if (move.who != FigureTypePawn) {
+            moveError->errtype = MoveErrorTypeAnotherFigure;
+            sprintf(errptr, "expected Pawn, got %s", fttostr(move.who));
+            return 1;
+        }
+    }
     switch (fromType) {
-    case FigureTypeNone:
-        moveError->errtype = MoveErrorTypeAnotherFigure;
-        sprintf(errptr, "No figure to move");
-        return 1;
-    case FigureTypePawn: // do en passant
+    case FigureTypePawn:
         if (move.type == MoveTypeQuiet) {
+            if (move.extra == MoveExtraEnPassant) {
+                moveError->errtype = MoveErrorTypeMoveType;
+                sprintf(errptr, "Expected capture move");
+                return 1;
+            }
             if (fl != tl) {
                 moveError->errtype = MoveErrorTypeMove;
                 sprintf(errptr, "Pawn can move only forward");
                 return 1;
             }
-        } else {
+        } else if (move.type == MoveTypeCapture) {
             if (fl == tl || abs((int)fl - (int)tl) > 1) {
                 moveError->errtype = MoveErrorTypeAttack;
                 sprintf(errptr, "Pawn can capture only diagonally");
                 return 1;
+            }
+            if (move.extra == MoveExtraEnPassant) {
+                Move prevMove = moves.array[index - 1];
+                if (prevMove.who != FigureTypePawn) {
+                    moveError->errtype = MoveErrorTypeAnotherFigure;
+                    sprintf(errptr,
+                            "Do en passant after long Pawn's move "
+                            "immediately");
+                    return 1;
+                }
+                if (fn
+                    != (fromSide == FigureSideWhite ? FieldNumber5
+                                                    : FieldNumber4)) {
+                    moveError->errtype = MoveErrorTypeAttack;
+                    sprintf(errptr, "Pawn cant do en passant");
+                    return 1;
+                }
+                if (prevMove.from.number
+                    != (fromSide == FigureSideWhite ? FieldNumber7
+                                                    : FieldNumber2)) {
+                    moveError->errtype = MoveErrorTypeAttack;
+                    sprintf(errptr, "No Pawn for en passant");
+                    return 1;
+                }
+                if (prevMove.to.number
+                    != (fromSide == FigureSideWhite ? FieldNumber5
+                                                    : FieldNumber4)) {
+                    moveError->errtype = MoveErrorTypeAttack;
+                    sprintf(errptr,
+                            "Can do en passant only after long Pawn's "
+                            "move");
+                    return 1;
+                }
+                if (prevMove.from.letter != move.to.letter) {
+                    moveError->errtype = MoveErrorTypeAttack;
+                    sprintf(errptr, "Wrong Pawn for en passant");
+                    return 1;
+                }
             }
         }
         int md = (int)(tn - fn) * (fromSide == FigureSideWhite ? 1 : -1);
@@ -177,6 +243,43 @@ int doMove(
                 moveError->errtype = MoveErrorTypeMove;
                 sprintf(errptr, "Pawn can move forward a maximum of two cells");
             }
+            return 1;
+        }
+        if (move.extra == MoveExtraBishop || move.extra == MoveExtraKnight
+            || move.extra == MoveExtraRook || move.extra == MoveExtraQueen) {
+            if (fn
+                != (fromSide == FigureSideWhite ? FieldNumber7
+                                                : FieldNumber2)) {
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr, "Wrong move for evolve");
+                return 1;
+            }
+            chessboard->cells[fn][fl].side = FigureSideNone;
+            chessboard->cells[fn][fl].type = FigureTypeNone;
+            chessboard->cells[tn][tl].side = fromSide;
+            switch (move.extra) {
+            case MoveExtraBishop:
+                chessboard->cells[tn][tl].type = FigureTypeBishop;
+                break;
+            case MoveExtraKnight:
+                chessboard->cells[tn][tl].type = FigureTypeKnight;
+                break;
+            case MoveExtraRook:
+                chessboard->cells[tn][tl].type = FigureTypeRook;
+                break;
+            case MoveExtraQueen:
+                chessboard->cells[tn][tl].type = FigureTypeQueen;
+                break;
+            default:
+                break;
+            }
+            return 0;
+        } else if (
+                tn
+                == (fromSide == FigureSideWhite ? FieldNumber8
+                                                : FieldNumber1)) {
+            moveError->errtype = MoveErrorTypeMove;
+            sprintf(errptr, "Pawn must to evolve");
             return 1;
         }
         break;
@@ -238,7 +341,8 @@ int doMove(
             && (fn != tn && fl != tl)) {
             moveError->errtype = MoveErrorTypeMove;
             sprintf(errptr,
-                    "Queen can move diagonally or vertically or horizontally");
+                    "Queen can move diagonally or vertically or "
+                    "horizontally");
             return 1;
         }
         FieldNumber n = fn;
@@ -271,58 +375,60 @@ int doMove(
                 sprintf(errptr, "King cant move to attacked field");
                 return 1;
             }
-            return 0;
-        }
-
-        FieldNumber n;
-        FieldLetter l;
-        n = fromSide == FigureSideWhite ? FieldNumber1 : FieldNumber8;
-        l = move.extra == MoveExtraLongCastling ? FieldLetterA : FieldLetterH;
-
-        if (fn != n || fl != FieldLetterE) {
-            moveError->errtype = MoveErrorTypeMove;
-            sprintf(errptr, "King cant be castled");
-            return 1;
-        }
-        Figure fg = chessboard->cells[n][l];
-        if (fg.type != FigureTypeRook || fg.side != fromSide) {
-            moveError->errtype = MoveErrorTypeMove;
-            sprintf(errptr, "No Rook for castling");
-            return 1;
-        }
-        if (isAttacked(move.from, chessboard, fromSide)) {
-            moveError->errtype = MoveErrorTypeMove;
-            sprintf(errptr, "King cant be castled through the attacked fields");
-            return 1;
-        }
-        int k = move.extra == MoveExtraShortCastling ? 1 : -1;
-        for (int i = 1; i <= 2; i++) {
-            Figure fg = chessboard->cells[n][FieldLetterE + k * i];
-            Field f = {.number = n, .letter = FieldLetterE + k * i};
-            if (fg.type != FigureTypeNone
-                || isAttacked(f, chessboard, fromSide)) {
+        } else {
+            FieldNumber n;
+            FieldLetter l;
+            n = fromSide == FigureSideWhite ? FieldNumber1 : FieldNumber8;
+            l = move.extra == MoveExtraLongCastling ? FieldLetterA
+                                                    : FieldLetterH;
+            Figure kf = chessboard->cells[n][FieldLetterE];
+            if (!(kf.type == FigureTypeKing && kf.side == fromSide)) {
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr, "King cant be castled");
+                return 1;
+            }
+            Figure rf = chessboard->cells[n][l];
+            if (rf.type != FigureTypeRook || rf.side != fromSide) {
+                moveError->errtype = MoveErrorTypeMove;
+                sprintf(errptr, "No Rook for castling");
+                return 1;
+            }
+            Field f = {FieldLetterE, n};
+            if (isAttacked(f, chessboard, fromSide)) {
                 moveError->errtype = MoveErrorTypeMove;
                 sprintf(errptr,
                         "King cant be castled through the attacked fields");
                 return 1;
             }
-        }
-
-        for (int i = fromSide == FigureSideBlack; i < index; i += 2) {
-            Move m = moves.array[i];
-            Field f = m.from;
-            if (m.who == FigureTypeKing) {
-                moveError->errtype = MoveErrorTypeMove;
-                sprintf(errptr, "King cant be castled when he moved once");
-                return 1;
+            int dir = move.extra == MoveExtraShortCastling ? 1 : -1;
+            for (int i = 1; i <= 2; i++) {
+                Figure fg = chessboard->cells[n][FieldLetterE + dir * i];
+                Field f = {.number = n, .letter = FieldLetterE + dir * i};
+                if (fg.type != FigureTypeNone
+                    || isAttacked(f, chessboard, fromSide)) {
+                    moveError->errtype = MoveErrorTypeMove;
+                    sprintf(errptr,
+                            "King cant be castled through the attacked "
+                            "fields");
+                    return 1;
+                }
             }
-            if (m.who == FigureTypeRook && f.letter == l && f.number == n) {
-                moveError->errtype = MoveErrorTypeMove;
-                sprintf(errptr, "King cant be castled with moved rook");
-                return 1;
+
+            for (int i = fromSide == FigureSideBlack; i < index; i += 2) {
+                Move m = moves.array[i];
+                Field f = m.from;
+                if (m.who == FigureTypeKing) {
+                    moveError->errtype = MoveErrorTypeMove;
+                    sprintf(errptr, "King cant be castled when he moved once");
+                    return 1;
+                }
+                if (m.who == FigureTypeRook && f.letter == l && f.number == n) {
+                    moveError->errtype = MoveErrorTypeMove;
+                    sprintf(errptr, "King cant be castled with moved rook");
+                    return 1;
+                }
             }
         }
-
         break;
     }
 
