@@ -1,6 +1,7 @@
 #include "chess_read.h"
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #define ERRFRMT(x, y) "Error at column " x ": expected "y
 
@@ -64,8 +65,8 @@ static Field parseField(const char* cptr, const char** endptr)
 
 static MoveExtra parseExtra(const char* string, const char** endptr)
 {
-    const char* cptr = string;
-    switch (*cptr) {
+    *endptr = string;
+    switch (*((*endptr)++)) {
     case 'R':
         return MoveExtraRook;
     case 'N':
@@ -74,13 +75,19 @@ static MoveExtra parseExtra(const char* string, const char** endptr)
         return MoveExtraBishop;
     case 'Q':
         return MoveExtraQueen;
+    case '+':
+        return MoveExtraCheck;
+    case '#':
+        return MoveExtraCheckmate;
+    case 'e':
+        if (strncmp(string, "e.p.", 4) == 0) {
+            *endptr += 3;
+            return MoveExtraEnPassant;
+        }
+        *endptr = string;
+        return MoveExtraNone;
     }
-    *endptr = cptr;
-    // e.p.
-
-    //+
-
-    //#
+    (*endptr)--;
     return MoveExtraNone;
 }
 
@@ -93,7 +100,45 @@ int parseMove(
     const char* sptr = *endstr;
     const char* cptr = string;
     const char* endptr;
-    // 0-0-0
+    if (*cptr == '0') {
+        if (strncmp(cptr, "0-0-0", 5) == 0) {
+            Field from;
+            from.letter = FieldLetterE;
+            from.number = FieldNumber1;
+            Field to;
+            to.letter = FieldLetterC;
+            to.number = FieldNumber1;
+            move->extra = MoveExtraLongCastling;
+            move->type = MoveTypeQuiet;
+            move->who = FigureTypeKing;
+            move->from = from;
+            move->to = to;
+            *endstr = cptr + 5;
+            return 0;
+        }
+        if (strncmp(cptr, "0-0", 3) == 0) {
+            Field from;
+            from.letter = FieldLetterE;
+            from.number = FieldNumber1;
+            Field to;
+            to.letter = FieldLetterG;
+            to.number = FieldNumber1;
+            move->extra = MoveExtraShortCastling;
+            move->type = MoveTypeQuiet;
+            move->who = FigureTypeKing;
+            move->from = from;
+            move->to = to;
+            *endstr = cptr + 3;
+            return 0;
+        }
+        *endstr = cptr;
+        parseError->errtype = ParseErrorTypeSyntax;
+        parseError->column = endptr - sptr;
+        sprintf(parseError->errstr,
+                ERRFRMT("%td", "0-0 or 0-0-0"),
+                endptr - sptr);
+        return 1;
+    }
 
     move->who = parseFigure(cptr, &endptr);
     if (move->who == FigureTypeNone) {
@@ -141,7 +186,7 @@ int parseMove(
     cptr = endptr;
 
     move->extra = parseExtra(cptr, &endptr);
-    *endstr = cptr;
+    *endstr = endptr;
 
     return 0;
 }
@@ -186,12 +231,19 @@ int parseStep(const char* string, Moves* moves, ParseError* parseError)
     }
     moves->count++;
     cptr = endptr;
-    if (*cptr++ != ' ' && *cptr != '\0' && *cptr != '\n') {
+    if (*cptr == '\0') {
+        return 0;
+    }
+    if (*cptr++ != ' ') {
         parseError->errtype = ParseErrorTypeSyntax;
         parseError->column = cptr - string;
-        sprintf(parseError->errstr, ERRFRMT("%td", "' '"), cptr - string);
+        sprintf(parseError->errstr,
+                ERRFRMT("%td", "' ', got %c"),
+                cptr - string,
+                *cptr);
         return 1;
     }
+
     if (*cptr != ' ' && *cptr != '\0') {
         endptr = string;
         errnum = parseMove(
@@ -211,7 +263,7 @@ int parseStep(const char* string, Moves* moves, ParseError* parseError)
             parseError->errtype = ParseErrorTypeSyntax;
             parseError->column = cptr - string;
             sprintf(parseError->errstr,
-                    ERRFRMT("%td", "<%c>"),
+                    ERRFRMT("%td", "end"),
                     cptr - string,
                     *cptr);
             return 1;
