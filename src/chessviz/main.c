@@ -1,4 +1,4 @@
-#include "chess_read.h"
+#include <libchessviz/chess_read.h>
 #include <libchessviz/chess.h>
 #include <libchessviz/chessboard_create.h>
 #include <libchessviz/chessboard_print_plain.h>
@@ -55,10 +55,6 @@ int main(int argc, char** argv)
 
         printf("\n%s", string);
     }
-
-    chessboardToString(&chessboard, string);
-
-    printf("\n%s", string);
 
     return 0;
 }
