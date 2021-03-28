@@ -7,7 +7,6 @@ RM = rm -rf
 
 CFLAGS = -Wall -Wextra -Werror -std=c11
 CPPFLAGS = -I src -MP -MMD
-CFLAGS_TEST = -Wall -std=c11
 CPPFLAGS_TEST = -I src -I thirdparty -MP -MMD
 LDFLAGS =
 LDLIBS =
@@ -59,10 +58,10 @@ test: $(TEST_APP_PATH)
 -include $(TEST_DEPS)
 
 $(TEST_APP_PATH): $(TEST_APP_OBJECTS) $(LIB_PATH)
-	$(CC) $(CFLAGS_TEST) $(CPPFLAGS_TEST) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) $(CPPFLAGS_TEST) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJ_DIR)/$(TEST_DIR)/%.o: $(TEST_DIR)/%.c
-	$(CC) -c $(CFLAGS_TEST) $(CPPFLAGS_TEST) $< -o $@
+	$(CC) -c $(CFLAGS) $(CPPFLAGS_TEST) $< -o $@
 
 .PHONY: clean
 clean:
