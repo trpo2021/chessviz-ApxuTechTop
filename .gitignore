@@ -1,0 +1,10 @@
+.vs
+*.exe
+*.o
+chessviz
+!chessviz/
+*.run
+*.elf
+*.d
+*.a
+*.txt
