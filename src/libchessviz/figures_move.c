@@ -120,6 +120,7 @@ int doMove(
     moveError->move = index + 1;
     char* errptr = moveError->errstr;
     errptr += sprintf(errptr, "Error at move %d: ", moveError->move);
+
     if (fromType == FigureTypeNone) {
         moveError->errtype = MoveErrorTypeAnotherFigure;
         sprintf(errptr, "No figure to move");
@@ -186,7 +187,7 @@ int doMove(
             }
             if (move.extra == MoveExtraEnPassant) {
                 Move prevMove = moves.array[index - 1];
-                if (prevMove.who != FigureTypePawn) {
+                if ((index - 1) < 0 || prevMove.who != FigureTypePawn) {
                     moveError->errtype = MoveErrorTypeAnotherFigure;
                     sprintf(errptr,
                             "Do en passant after long Pawn's move "
@@ -401,15 +402,22 @@ int doMove(
                 return 1;
             }
             int dir = move.extra == MoveExtraShortCastling ? 1 : -1;
-            for (int i = 1; i <= 2; i++) {
-                Figure fg = chessboard->cells[n][FieldLetterE + dir * i];
+            for (int i = 0; i <= 2; i++) {
                 Field f = {.number = n, .letter = FieldLetterE + dir * i};
-                if (fg.type != FigureTypeNone
-                    || isAttacked(f, chessboard, fromSide)) {
+                if (isAttacked(f, chessboard, fromSide)) {
                     moveError->errtype = MoveErrorTypeMove;
                     sprintf(errptr,
                             "King cant be castled through the attacked "
                             "fields");
+                    return 1;
+                }
+            }
+            for (int i = FieldLetterE + dir; i != (int)l; i += dir) {
+                Figure fg = chessboard->cells[n][i];
+                if (fg.type != FigureTypeNone) {
+                    moveError->errtype = MoveErrorTypeMove;
+                    sprintf(errptr,
+                            "King cant be castled through the figures ");
                     return 1;
                 }
             }
@@ -441,6 +449,20 @@ int doMove(
     chessboard->cells[fn][fl].type = FigureTypeNone;
     chessboard->cells[tn][tl].side = fromSide;
     chessboard->cells[tn][tl].type = fromType;
+
+    for (int i = 0; i < CHESSBOARD_SIZE; i++) {
+        for (int j = 0; j < CHESSBOARD_SIZE; j++) {
+            if (chessboard->cells[i][j].type == FigureTypeKing
+                && chessboard->cells[i][j].side == fromSide) {
+                Field f = {j, i};
+                if (isAttacked(f, chessboard, fromSide)) {
+                    moveError->errtype = MoveErrorTypeAnotherFigure;
+                    sprintf(errptr, "Dont set up the King");
+                    return 1;
+                }
+            }
+        }
+    }
 
     return 0;
 }
