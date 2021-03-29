@@ -1,5 +1,5 @@
-#include <libchessviz/chess_read.h>
 #include <libchessviz/chess.h>
+#include <libchessviz/chess_read.h>
 #include <libchessviz/chessboard_create.h>
 #include <libchessviz/chessboard_print_plain.h>
 #include <stdio.h>
