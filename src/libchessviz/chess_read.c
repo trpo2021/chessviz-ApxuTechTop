@@ -262,10 +262,7 @@ int parseStep(const char* string, Moves* moves, ParseError* parseError)
         if (!isspace(*cptr)) {
             parseError->errtype = ParseErrorTypeSyntax;
             parseError->column = cptr - string;
-            sprintf(parseError->errstr,
-                    ERRFRMT("%td", "end"),
-                    cptr - string,
-                    *cptr);
+            sprintf(parseError->errstr, ERRFRMT("%td", "end"), cptr - string);
             return 1;
         }
         cptr = cptr + 1;
